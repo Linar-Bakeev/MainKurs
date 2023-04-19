@@ -1,0 +1,675 @@
+package MainKurs;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Scanner;
+
+public class Main {
+
+    // Глобальные переменные X
+    public static int x1, x2, x3, x4, x5, x6 , x7, x8, x9, x10;
+
+    public static boolean xx1,xx2,xx3,xx4,xx5,xx6,xx7,xx8,xx9,xx10;
+
+    // Текущие значения автомата
+    public static StringBuilder currentY = new StringBuilder("000000000000000");
+    public static StringBuilder currentW = new StringBuilder("0000");
+    public static StringBuilder currentU = new StringBuilder("0000");
+    public static StringBuilder currentA = new StringBuilder("0000");
+    public static int currentState = 0;
+
+    // Массив для проверки зацикливания
+    public static int [] mass = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    // Троичные матрицы
+    public static String [][] matrixY = new String [15][];
+    public static String [][] matrixW = new String [4][];
+    public static String [][] matrixU = new String [4][];
+    public static int [][] newY = new int [15][];
+    // Коды состояний
+    public static String [] states = {"0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "" +
+            "1010", "1011", "1100", "1101", "1110"};
+
+     // Переменные для подсчета времени выполнения
+    public static double startTime;
+    public static double stopTime;
+    public static double elapsedTime;
+    // Валидация входных данных
+    public static boolean InputValidation(){
+        if (String.valueOf(x1).length() > 1 || String.valueOf(x2).length() > 1 || String.valueOf(x3).length() > 1 ||
+                String.valueOf(x4).length() > 1 || String.valueOf(x5).length() > 1 || String.valueOf(x6).length() > 1 ||
+                String.valueOf(x7).length() > 1 || String.valueOf(x8).length() > 1 || String.valueOf(x9).length() > 1 ||
+                String.valueOf(x10).length() > 1) {
+            System.out.println("Error: Длина входных значений не равна 1");
+            return true;
+        }
+
+        if (x1 != 0 && x1 != 1 || x2 != 0 && x2 != 1 || x3 != 0 && x3 != 1 || x4 != 0 && x4 != 1 || x5 != 0 && x5 != 1 ||
+                x6 != 0 && x6 != 1 || x7 != 0 && x7 != 1 || x8 != 0 && x8 != 1 || x9 != 0 && x9 != 1 || x10 != 0 && x10 != 1) {
+            System.out.println("Error: Во входных значениях присутствуют запрещенные символы");
+            return true;
+        }
+
+        return false;
+    }
+
+    // LOG текущего состояния
+    public static void stateLOG(int currentState, String [] states, StringBuilder currentY) {
+        System.out.println("State: S" + currentState);
+        System.out.println("Code of state: " + states[currentState]);
+        System.out.println("Current Y (y1 ... y15): " + currentY);
+        System.out.println("");
+    }
+
+
+    // Сравнение строк
+    public static boolean Compare(String pattern, String str)
+    {
+        for(int i = 0; i < str.length(); i++)
+        {
+            if (pattern.charAt(i) != '-')
+            {
+                if(str.charAt(i) != pattern.charAt(i))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public static void wu() {
+        String input = currentA + String.valueOf(x10) + String.valueOf(x9) + String.valueOf(x8) + String.valueOf(x7) + String.valueOf(x6) + String.valueOf(x5) + String.valueOf(x4) + String.valueOf(x3) + String.valueOf(x2) + String.valueOf(x1);
+        for(int i = 0; i < matrixW.length; i++)
+        {
+            for (int j = 0; j < matrixW[i].length; j++)
+            {
+                if (Compare(matrixW[i][j], input)) {
+                    currentW.setCharAt(matrixW.length - i - 1, '1');
+                }
+            }
+
+            for (int j = 0; j < matrixU[i].length; j++)
+            {
+                if (Compare(matrixU[i][j], input)) {
+                    currentU.setCharAt(matrixW.length - i - 1, '1');
+                }
+            }
+        }
+    }
+
+
+
+    public static void newState() {
+        for(int i = 0; i < currentW.length(); i++)
+        {
+            if (currentW.charAt(i) == '1')
+                currentA.setCharAt(i, '1');
+            else if (currentU.charAt(i) == '1')
+                currentA.setCharAt(i, '0');
+        }
+        currentState = Integer.parseInt(currentA.toString(), 2);
+        mass[currentState] += 1;
+    }
+
+    public static void y() {
+        for (int i = 0; i < matrixY.length; i++)
+        {
+            for (String y : matrixY[i])
+            {
+                if (Compare(y, currentA.toString())) {
+                    currentY.setCharAt(i, '1');
+                }
+            }
+        }
+    }
+
+    public static void clear() {
+        currentY = new StringBuilder("000000000000000");
+        currentW = new StringBuilder("0000");
+        currentU = new StringBuilder("0000");
+    }
+
+
+    //множество единичных наборов
+
+   static int []signal; //иксы
+    static int [] CycleCheck = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static int CycleFlag = 0;
+    static int[] state = { 0, 0, 0, 0, 0 };
+
+    int [] States = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    static int []boolY = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static int []Curr; //альфа + икс
+    static int []Prev; //альфа + икс
+    static int []ArrState; //состояния
+    static int []ArrCurr; //альфа + икс
+    String HelpStr = "";
+    static int checkStr = 0;
+    int countState = 1;
+    int first;
+    static int State;
+    int n;
+    static int flag = 0;
+    int next;
+
+
+    static int [][]SostWU; //будущий двумерный массив
+    static int []w0;
+    static int []w1;
+    static  int []w2;
+    static int []w3;
+
+    static int []u0;
+    static int []u1;
+    static  int []u2;
+    static  int []u3;
+
+    static void Multiplier() {
+        startTime = System.nanoTime();
+        Unit_set();
+        System.out.println("-----Множество единичных наборов-----\r\n");
+        for (int i = 0; i < 15; i++) {
+            MultiplierYWU();
+            System.out.println("Состояние = ");
+            OutputMultiplier();
+            System.out.println("Y(y1 - y15) = ");
+            OutputBool(boolY, 15);
+            boolY[0] = 0;
+            boolY[1] = 0;
+            boolY[2] = 0;
+            boolY[3] = 0;
+            boolY[4] = 0;
+            boolY[5] = 0;
+            boolY[6] = 0;
+            boolY[7] = 0;
+            boolY[8] = 0;
+            boolY[9] = 0;
+            boolY[10] = 0;
+            boolY[11] = 0;
+            boolY[12] = 0;
+            boolY[13] = 0;
+            boolY[14] = 0;
+            boolY[15] = 0;
+
+            OutputBoolMultiplier(Curr, Curr.length);
+            if (CycleFlag == 1)
+            {
+                if (flag == 1) {
+                    CycleFlag = 0;
+                    System.out.println("\n Зациклился \n");
+                }
+                else {
+                    CycleFlag = 0;
+                    System.out.println("\n Алгоритм закончил работу \n");
+                }
+                break;
+            }
+            ChangeCurr();
+            for (int j = 0; j < 15; j++)
+                Prev[i] = Curr[i];
+            System.out.println("\n");
+        }
+        elapsedTime = (stopTime - startTime) * 1000000;
+        System.out.println("");
+        System.out.println("Execution time: " + elapsedTime + " ms");
+    }
+
+    static void Unit_set() {
+
+        for (int i = 0; i < 20; i++) {
+            if (i < 5)
+                Curr[i] = state[i];
+            else Curr[i] = signal[i - 5];
+            ArrCurr[i] = Curr[i];
+        }
+        for (int i = 1; i < 20; i++) {
+            Prev[i] = Curr[i];
+        }
+    }
+    static int pow_ten(int arr[], int n) {
+        int pow = 1;
+        int sum = 0;
+        for (int i = n - 1; i >= 0; i--)
+        {
+            if (arr[i] == 1)
+                sum += pow;
+            pow *= 2;
+        }
+        return sum;
+    }
+    static void MultiplierYWU()
+    {
+        for (int i = 0; i < 5; i++) {
+            ArrState[i] = Curr[4-i];
+        }
+        State = pow_ten(ArrState, ArrState.length);
+        for (int i = 0; i < newY.length; i++)
+        {
+            for (long j = 0; j < newY[i].length; j++)
+            {
+                if (newY[i][j] == State && State != 0){
+                    boolY[i] = 1;
+                }
+            }
+        }
+        for (int i = 0; i < 5; i++) {
+            ArrState[i] = 0;
+        }
+        for (int i = 0; i < 20; i++)
+            ArrCurr[i] = Curr[i];
+        checkStr = pow_ten(ArrCurr, ArrCurr.length);
+
+    }
+
+    static String OutputMultiplier()
+
+    {
+        int sum = 0;
+        if (Curr[0] == 1)
+        {
+            sum += 1;
+        }
+        if (Curr[1] == 1)
+        {
+            sum += 2;
+        }
+        if (Curr[2] == 1)
+        {
+            sum += 4;
+        }
+        if (Curr[3] == 1)
+        {
+            sum += 8;
+        }
+        if (Curr[4] == 1)
+        {
+            sum += 16;
+        }
+        if (CycleCheck[sum] == 1)
+        {
+            if (sum == 0) {
+                flag = 0;
+            }
+            else {
+
+                flag = 1;
+            }
+            CycleFlag = 1;
+        }
+        CycleCheck[sum] = 1;
+        System.out.println("State: S" + currentState);
+        System.out.println("Code of state: " + states[currentState]);
+        System.out.println("Current Y (y1 ... y15): " + currentY);
+
+        return ;
+
+    }
+
+    static boolean check(int i) {
+        for (int j = 0; j < SostWU[i].length; j++) {
+            if (SostWU[i][j] == checkStr)
+                return true;
+        }
+        return false;
+    }
+
+    static void ChangeCurr()
+    {
+        for (int i = 4; i >= 0; i--)
+        {
+            if (check(i) == true)
+            {
+                Curr[i] = 1;
+            }
+            if (check(i + 5) == true)
+            {
+                Curr[i] = 0;
+
+            }
+        }
+    }
+
+//    static void InputInt(int []Array, int Lenght)
+//    {
+//        int tmp;
+//        ifstream fin;
+//        fin.open("C:\\Users\\Febest\\Desktop\\inp.txt", ios::in);
+//        for (int i = 0; i < Lenght; i++)
+//        {
+//            fin >> tmp;
+//            if (tmp > 1 || tmp < 0)
+//            {
+//                System.out.println("Некорректный ввод\n");
+//                System.exit(0);
+//
+//            }
+//            Array[i] = tmp;
+//        }
+//        fin.close();
+//    }
+
+
+    static void OutputBoolMultiplier(int Curr[], int n)
+    {
+        for (int i = 0; i <= n - 16; i++)
+        {
+            System.out.println(Curr[i]);
+        }
+        System.out.println("	");
+    }
+
+
+    static void Method_ed() {
+        FILE* file = NULL;
+        int test;
+        for (int l = 0; l < w0.length; l++) { // W0
+            SostWU[0][l] = w0[l];
+        }
+        for (int l = 0; l < w1.length; l++) { // W1
+            SostWU[1][l] = w1[l];
+        }
+        for (int l = 0; l < w2.length; l++) {// W2
+            SostWU[2][l] = w2[l];
+        }
+        for (int l = 0; l < w3.length; l++) { // W3
+            SostWU[3][l] = w3[l];
+        }
+        for (int l = 0; l < u0.length; l++) { // U0
+            SostWU[5][l] = u0[l];
+        }
+        for (int l = 0; l < u1.length; l++) { // U1
+            SostWU[6][l] = u1[l];
+        }
+        for (int l = 0; l < u2.length; l++) { // U2
+            SostWU[7][l] = u2[l];
+        }
+        for (int l = 0; l < u3.length; l++) { // U3
+            SostWU[8][l] = u3[l];
+        }
+    }
+
+    static void vvodUW(String path, int a) throws FileNotFoundException { //функция ввода массивов
+        int i = 0;
+        File file = new File(path);
+        FileOutputStream fost = new FileOutputStream(file);
+        if(file.exists() && !file.isDirectory())
+        {
+            String str;
+            while (file.getline(file, str))
+            {
+                int ss = str.length();
+                int num;
+
+                while (ss >> num)
+                {
+                    a[i] = num;
+                    i++;
+                }
+            }
+        }
+        try {
+            fost.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    static String pathw0 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\w0.txt"; //пути к файлам с числами
+    static String pathw1 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\w1.txt";
+    static String pathw2 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\w2.txt";
+    static String pathw3 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\w3.txt";
+
+    static String pathu0 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\u0.txt";
+    static String pathu1 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\u1.txt";
+    static String pathu2 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\u2.txt";
+    static String pathu3 = "C:\\Users\\Yuki\\IdeaProjects\\MainKurs\\wu\\u3.txt";
+
+
+
+
+    // Функция троичных матриц
+    public static void matrix()
+    {
+        if (InputValidation()) {
+            return;
+        }
+
+        startTime = System.nanoTime();
+        stateLOG(currentState, states, currentY);
+
+        do
+        {
+            // Условия выхода из цикла
+            if (mass[currentState] > 2)
+            {
+                System.out.println("Обнаружено зацикливание");
+                break;
+            }
+
+            // Очистка текущих значений
+            clear();
+
+            // Подсчет W и U
+            wu();
+
+            // Переход в новое состояние
+            newState();
+
+            // Подсчет Y
+            y();
+
+
+            // Вывод LOG'а текущего состояния
+            stateLOG(currentState, states, currentY);
+
+        } while (currentState != 0);
+
+        stopTime = System.nanoTime();
+
+        // Время выполнения
+        elapsedTime = (stopTime - startTime) * 1000000;
+        System.out.println("");
+        System.out.println("Execution time: " + elapsedTime + " ms");
+    }
+
+    public static void main(String[] args) {
+
+        Scanner input = new Scanner(System.in);
+
+        System.out.println("Введите x1, x2, x3, x4, x5, x6, x7, x8, x9, x10 через пробел");
+
+
+        x1 = input.nextInt();
+        x2 = input.nextInt();
+        x3 = input.nextInt();
+        x4 = input.nextInt();
+        x5 = input.nextInt();
+        x6 = input.nextInt();
+        x7 = input.nextInt();
+        x8 = input.nextInt();
+        x9 = input.nextInt();
+        x10 = input.nextInt();
+
+        // проверка истинности значений (равны ли они 1)
+        xx1 = x1 == 1;
+        xx2 = x2 == 1;
+        xx3 = x3 == 1;
+        xx4 = x4 == 1;
+        xx5 = x5 == 1;
+        xx6 = x6 == 1;
+        xx7 = x7 == 1;
+        xx8 = x8 == 1;
+        xx9 = x9 == 1;
+        xx10 = x10 == 1;
+
+        System.out.println("Введите 1 для решения методом троичных матрицы или 2 для решения методом логических выражений.");
+        int temp;
+        temp = input.nextInt();
+
+        input.close();
+
+        if (x2 == 1 && x1 == 1) {
+            System.out.println("Error: Параллельный переход");
+            return;
+        }else if (x3 == 1 && x1 == 1) {
+            System.out.println("Error: Параллельный переход");
+            return;
+        }
+
+        // Троичные матрицы для Y
+        matrixY[0] = new String[1];
+        matrixY[1] = new String[3];
+        matrixY[2] = new String[1];
+        matrixY[3] = new String[2];
+        matrixY[4] = new String[2];
+        matrixY[5] = new String[4];
+        matrixY[6] = new String[1];
+        matrixY[7] = new String[3];
+        matrixY[8] = new String[1];
+        matrixY[9] = new String[2];
+        matrixY[10] = new String[3];
+        matrixY[11] = new String[1];
+        matrixY[12] = new String[1];
+        matrixY[13] = new String[1];
+        matrixY[14] = new String[2];
+        matrixY[0][0] = "0000";
+        matrixY[1][0] = "0001";
+        matrixY[2][0] = "0010";
+        matrixY[3][0] = "0011";
+        matrixY[4][0] = "0001";
+        matrixY[5][0] = "0100";
+        matrixY[6][0] = "0101";
+        matrixY[7][0] = "0101";
+        matrixY[8][0] = "0111";
+        matrixY[9][0] = "1000";
+        matrixY[10][0] = "1011";
+        matrixY[11][0] = "0001";
+        matrixY[12][0] = "1100";
+        matrixY[13][0] = "1100";
+        matrixY[14][0] = "0011";
+        matrixY[1][1] = "0100";
+        matrixY[1][2] = "0111";
+        matrixY[3][1] = "0101";
+        matrixY[4][1] = "0011";
+        matrixY[5][1] = "0111";
+        matrixY[5][2] = "1011";
+        matrixY[5][3] = "1101";
+        matrixY[7][1] = "1011";
+        matrixY[7][2] = "1100";
+        matrixY[9][1] = "1101";
+        matrixY[10][1] = "1001";
+        matrixY[10][2] = "1101";
+        matrixY[14][1] = "1101";
+
+        // Троичные матрицы для W
+
+        matrixW[0] = new String[7];
+        matrixW[1] = new String[5];
+        matrixW[2] = new String[2];
+        matrixW[3] = new String[3];
+        matrixW[0][0] = "0000----------";
+        matrixW[0][1] = "0010----------";
+        matrixW[0][2] = "0100-----0----";
+        matrixW[0][3] = "0100----------";
+        matrixW[0][4] = "1001----------";
+        matrixW[0][5] = "1000---1-----1";
+        matrixW[0][6] = "1100----------";
+        matrixW[1][0] = "0001-------111";
+        matrixW[1][1] = "0100-----1----";
+        matrixW[1][2] = "0101----------";
+        matrixW[1][3] = "1000-1-0-----1";
+        matrixW[1][4] = "1101-10-1-0---";
+        matrixW[2][0] = "0011------1---";
+        matrixW[2][1] = "0100----------";
+        matrixW[3][0] = "0001-------11-";
+        matrixW[3][1] = "0011------0---";
+        matrixW[3][2] = "0111---1------";
+
+        // Троичные матрицы для U
+        matrixU[0] = new String[6];
+        matrixU[1] = new String[5];
+        matrixU[2] = new String[2];
+        matrixU[3] = new String[5];
+        matrixU[0][0] = "0001---------1";
+        matrixU[0][1] = "0011----------";
+        matrixU[0][2] = "0111-----1----";
+        matrixU[0][3] = "1001----------";
+        matrixU[0][4] = "10111---------";
+        matrixU[0][5] = "11011-0-1-0----";
+        matrixU[1][0] = "0011------1---";
+        matrixU[1][1] = "0111-----0----";
+        matrixU[1][2] = "1010----------";
+        matrixU[1][3] = "1011----------";
+        matrixU[1][4] = "1111-00-1-10--";
+        matrixU[2][0] = "0111----1-----";
+        matrixU[2][1] = "11011-0-1-0---";
+        matrixU[3][0] = "1001-0-------00";
+        matrixU[3][1] = "1001-0--------";
+        matrixU[3][2] = "1010----------";
+        matrixU[3][3] = "1101-00-1----1-";
+        matrixU[3][4] = "1101-00-1---1-";
+
+
+
+
+        //множества ед наборов игрики
+
+
+        newY[0][0] = 0;
+        newY[1][0] = 1 ;
+        newY[1][1] = 4;
+        newY[1][2] = 7;
+        newY[2][0] = 2;
+        newY[3][0] = 3 ;
+        newY[3][1] = 5;
+        newY[4][0] = 1;
+        newY[4][1] = 3;
+        newY[5][0] = 4;
+        newY[5][1] = 7;
+        newY[5][2] = 11;
+        newY[5][3] = 13;
+        newY[6][0] = 5;
+        newY[7][0] = 5;
+        newY[7][1] = 11;
+        newY[7][2] = 12;
+        newY[8][0] = 7;
+        newY[9][0] = 8;
+        newY[9][1] = 13;
+        newY[10][0] = 11;
+        newY[10][1] = 9;
+        newY[10][2] = 13;
+        newY[11][0] = 1;
+        newY[12][0] = 12;
+        newY[13][0] = 12;
+        newY[14][0] = 3;
+        newY[14][1] = 13;
+
+
+
+
+
+        if (temp == 1) {
+            matrix();
+        }else if (temp == 2) {
+            vvodUW(pathw0, w0); //заполняем массивы
+            vvodUW(pathw1, w1);
+            vvodUW(pathw2, w2);
+            vvodUW(pathw3, w3);
+
+            vvodUW(pathu0, u0);
+            vvodUW(pathu1, u1);
+            vvodUW(pathu2, u2);
+            vvodUW(pathu3, u3);
+
+            Method_ed();
+            Multiplier();
+
+        }else {
+            System.out.println("Error: Некорректный ввод данных.");
+        }
+    }
+
+}
+
