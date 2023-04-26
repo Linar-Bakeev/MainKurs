@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class Main {
 
     // Глобальные переменные X
-    public static int x1, x2, x3, x4, x5, x6 , x7, x8, x9, x10;
+    public static int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10;
 
     public static boolean xx1,xx2,xx3,xx4,xx5,xx6,xx7,xx8,xx9,xx10;
 
